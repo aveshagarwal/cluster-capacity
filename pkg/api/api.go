@@ -21,6 +21,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubernetes/pkg/api/v1"
+	av1beta1 "k8s.io/kubernetes/pkg/apis/apps/v1beta1"
 	"k8s.io/kubernetes/pkg/apis/extensions/v1beta1"
 )
 
@@ -39,6 +40,7 @@ const (
 	ServiceAccounts        ResourceType = "serviceaccounts"
 	LimitRanges            ResourceType = "limitranges"
 	Namespaces             ResourceType = "namespaces"
+	StatefulSets           ResourceType = "statefulsets"
 )
 
 func (r ResourceType) String() string {
@@ -71,6 +73,8 @@ func (r ResourceType) ObjectType() runtime.Object {
 		return &v1.LimitRange{}
 	case "namespaces":
 		return &v1.Namespace{}
+	case "statefulsets":
+		return &av1beta1.StatefulSet{}
 	}
 	return nil
 }
@@ -101,6 +105,8 @@ func StringToResourceType(resource string) (ResourceType, error) {
 		return LimitRanges, nil
 	case "namespaces":
 		return Namespaces, nil
+	case "statefulsets":
+		return StatefulSets, nil
 	default:
 		return "", fmt.Errorf("Resource type %v not recognized", resource)
 	}

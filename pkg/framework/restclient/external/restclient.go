@@ -38,6 +38,7 @@ import (
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/testapi"
 	"k8s.io/kubernetes/pkg/api/v1"
+	av1beta1 "k8s.io/kubernetes/pkg/apis/apps/v1beta1"
 	"k8s.io/kubernetes/pkg/apis/extensions/v1beta1"
 
 	ccapi "github.com/kubernetes-incubator/cluster-capacity/pkg/api"
@@ -235,6 +236,24 @@ func (c *RESTClient) ReplicaSets(fieldsSelector fields.Selector) *v1beta1.Replic
 	}
 }
 
+func (c *RESTClient) StatefulSets(fieldsSelector fields.Selector) *av1beta1.StatefulSetList {
+	items := c.resourceStore.List(ccapi.StatefulSets)
+	typedItems := make([]av1beta1.StatefulSet, 0, len(items))
+	for _, item := range items {
+		if !fieldsSelector.Matches(NewObjectFieldsAccessor(item)) {
+			continue
+		}
+		typedItems = append(typedItems, *item.(*av1beta1.StatefulSet))
+	}
+
+	return &av1beta1.StatefulSetList{
+		ListMeta: metav1.ListMeta{
+			ResourceVersion: "0",
+		},
+		Items: typedItems,
+	}
+}
+
 func (c *RESTClient) ResourceQuota(fieldsSelector fields.Selector) *v1.ResourceQuotaList {
 	items := c.resourceStore.List(ccapi.ResourceQuota)
 	typedItems := make([]v1.ResourceQuota, 0, len(items))
@@ -341,6 +360,8 @@ func (c *RESTClient) List(resource ccapi.ResourceType, fieldsSelector fields.Sel
 		return c.Nodes(fieldsSelector), nil
 	case ccapi.ReplicaSets:
 		return c.ReplicaSets(fieldsSelector), nil
+	case ccapi.StatefulSets:
+		return c.StatefulSets(fieldsSelector), nil
 	case ccapi.ResourceQuota:
 		return c.ResourceQuota(fieldsSelector), nil
 	case ccapi.Secrets:
@@ -431,6 +452,9 @@ func (c *RESTClient) request(verb string) *restclient.Request {
 	if c.name == "extensions" {
 		gvr := schema.GroupVersionResource{Group: "extensions", Version: "v1beta1", Resource: "replicasets"}
 		targetVersion = gvr.GroupVersion()
+	} else if c.name == "apps" {
+		gvr := schema.GroupVersionResource{Group: "apps", Version: "v1beta1", Resource: "statefulsets"}
+		targetVersion = gvr.GroupVersion()
 	} else {
 		targetVersion = *testapi.Default.GroupVersion()
 	}
@@ -472,6 +496,17 @@ func (c *RESTClient) createListReadCloser(resource ccapi.ResourceType, fieldsSel
 
 		encoder := api.Codecs.EncoderForVersion(info.Serializer, gvr.GroupVersion())
 		nopCloser := ioutil.NopCloser(bytes.NewReader([]byte(runtime.EncodeOrDie(encoder, obj.(*v1beta1.ReplicaSetList)))))
+		return &nopCloser, nil
+
+	} else if resource == ccapi.StatefulSets {
+		gvr := schema.GroupVersionResource{Group: "apps", Version: "v1beta1", Resource: "statefulsets"}
+		info, ok := runtime.SerializerInfoForMediaType(c.NegotiatedSerializer.SupportedMediaTypes(), runtime.ContentTypeJSON)
+		if !ok {
+			return nil, fmt.Errorf("serializer for %s not registered", runtime.ContentTypeJSON)
+		}
+
+		encoder := api.Codecs.EncoderForVersion(info.Serializer, gvr.GroupVersion())
+		nopCloser := ioutil.NopCloser(bytes.NewReader([]byte(runtime.EncodeOrDie(encoder, obj.(*av1beta1.StatefulSetList)))))
 		return &nopCloser, nil
 
 	} else {
@@ -522,6 +557,9 @@ func (c *RESTClient) createGetReadCloser(resource ccapi.ResourceType, resourceNa
 	case ccapi.ReplicaSets:
 		obj = runtime.Object(item.(*v1beta1.ReplicaSet))
 		ns = item.(*v1beta1.ReplicaSet).Namespace
+	case ccapi.StatefulSets:
+		obj = runtime.Object(item.(*av1beta1.StatefulSet))
+		ns = item.(*av1beta1.StatefulSet).Namespace
 	case ccapi.ResourceQuota:
 		obj = runtime.Object(item.(*v1.ResourceQuota))
 		ns = item.(*v1.ResourceQuota).Namespace
@@ -598,6 +636,10 @@ func (c *RESTClient) createWatchReadCloser(resource ccapi.ResourceType, fieldsSe
 		}
 	case ccapi.ReplicaSets:
 		for _, item := range c.ReplicaSets(fieldsSelector).Items {
+			rg.EmitWatchEvent(watch.Added, runtime.Object(&item))
+		}
+	case ccapi.StatefulSets:
+		for _, item := range c.StatefulSets(fieldsSelector).Items {
 			rg.EmitWatchEvent(watch.Added, runtime.Object(&item))
 		}
 	case ccapi.ResourceQuota:

@@ -104,6 +104,14 @@ func (c *WatchBuffer) EmitWatchEvent(eType watch.EventType, object runtime.Objec
 		}
 
 		encoder = api.Codecs.EncoderForVersion(info.Serializer, gvr.GroupVersion())
+	} else if c.Resource == ccapi.StatefulSets {
+		gvr := schema.GroupVersionResource{Group: "apps", Version: "v1beta1", Resource: "statefulsets"}
+		info, ok := runtime.SerializerInfoForMediaType(testapi.Default.NegotiatedSerializer().SupportedMediaTypes(), runtime.ContentTypeJSON)
+		if !ok {
+			return fmt.Errorf("serializer for %s not registered", runtime.ContentTypeJSON)
+		}
+
+		encoder = api.Codecs.EncoderForVersion(info.Serializer, gvr.GroupVersion())
 	} else {
 		encoder = testapi.Default.Codec()
 	}

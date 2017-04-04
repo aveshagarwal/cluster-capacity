@@ -113,9 +113,12 @@ func (c *ClusterCapacity) SyncWithClient(client externalclientset.Interface) err
 	for _, resource := range c.resourceStore.Resources() {
 		var listWatcher *cache.ListWatch
 		if resource == ccapi.ReplicaSets {
-			listWatcher = cache.NewListWatchFromClient(client.Extensions().RESTClient(), resource.String(), metav1.NamespaceAll, fields.ParseSelectorOrDie(""))
+			listWatcher = cache.NewListWatchFromClient(client.ExtensionsV1beta1().RESTClient(), resource.String(), metav1.NamespaceAll, fields.ParseSelectorOrDie(""))
+		} else if resource == ccapi.StatefulSets {
+			//listWatcher = cache.NewListWatchFromClient(client.AppsV1beta1().RESTClient(), resource.String(), metav1.NamespaceAll, fields.ParseSelectorOrDie(""))
+			continue
 		} else {
-			listWatcher = cache.NewListWatchFromClient(client.Core().RESTClient(), resource.String(), metav1.NamespaceAll, fields.ParseSelectorOrDie(""))
+			listWatcher = cache.NewListWatchFromClient(client.CoreV1().RESTClient(), resource.String(), metav1.NamespaceAll, fields.ParseSelectorOrDie(""))
 		}
 
 		options := metav1.ListOptions{ResourceVersion: "0"}
@@ -247,7 +250,7 @@ func (c *ClusterCapacity) nextPod() error {
 	pod.ObjectMeta.Name = fmt.Sprintf("%v-%v", c.simulatedPod.Name, c.simulated)
 
 	// Check the pod's namespace exists
-	_, err := c.externalkubeclient.Core().Namespaces().Get(pod.ObjectMeta.Namespace, metav1.GetOptions{})
+	_, err := c.externalkubeclient.CoreV1().Namespaces().Get(pod.ObjectMeta.Namespace, metav1.GetOptions{})
 	if err != nil {
 		c.status.StopReason = fmt.Sprintf("NamespaceNotFound: %v", err)
 		return fmt.Errorf("Pod's namespace %v not found: %v", c.simulatedPod.ObjectMeta.Namespace, err)
