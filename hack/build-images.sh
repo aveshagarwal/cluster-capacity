@@ -8,7 +8,6 @@
 # origin-deployer, etc.
 STARTTIME=$(date +%s)
 source "$(dirname "${BASH_SOURCE}")/lib/init.sh"
-source "${OS_ROOT}/contrib/node/install-sdn.sh"
 
 if [[ "${OS_RELEASE:-}" == "n" ]]; then
 	# Use local binaries
@@ -20,7 +19,7 @@ if [[ "${OS_RELEASE:-}" == "n" ]]; then
 		platform="$(os::build::host_platform)"
 		OS_BUILD_PLATFORMS=("${OS_IMAGE_COMPILE_PLATFORMS[@]:-${platform}}")
 		OS_IMAGE_COMPILE_TARGETS=("${OS_IMAGE_COMPILE_TARGETS[@]:-${OS_IMAGE_COMPILE_TARGETS_LINUX[@]}}")
-		OS_SCRATCH_IMAGE_COMPILE_TARGETS=("${OS_SCRATCH_IMAGE_COMPILE_TARGETS[@]:-${OS_SCRATCH_IMAGE_COMPILE_TARGETS_LINUX[@]}}")
+		OS_SCRATCH_IMAGE_COMPILE_TARGETS=("${OS_SCRATCH_IMAGE_COMPILE_TARGETS[@]:-}")
 		readonly OS_GOFLAGS_TAGS="include_gcs include_oss"
 
 		echo "Building images from source ${OS_RELEASE_COMMIT}:"

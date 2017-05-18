@@ -356,41 +356,6 @@ function os::build::place_bins() {
           ln "${release_binpath}/oc${suffix}" "${release_binpath}/${linkname}${suffix}"
         fi
       done
-
-      # Create the release archive.
-      platform="$( os::build::host_platform_friendly "${platform}" )"
-      if [[ ${OS_RELEASE_ARCHIVE} == "openshift-origin" ]]; then
-        for file in "${OS_BINARY_RELEASE_CLIENT_EXTRA[@]}"; do
-          cp "${file}" "${release_binpath}/"
-        done
-        if [[ $platform == "windows" ]]; then
-          OS_RELEASE_ARCHIVE="openshift-origin-client-tools" os::build::archive_zip "${OS_BINARY_RELEASE_CLIENT_WINDOWS[@]}"
-        elif [[ $platform == "mac" ]]; then
-          OS_RELEASE_ARCHIVE="openshift-origin-client-tools" os::build::archive_zip "${OS_BINARY_RELEASE_CLIENT_MAC[@]}"
-        elif [[ $platform == "linux-32bit" ]]; then
-          OS_RELEASE_ARCHIVE="openshift-origin-client-tools" os::build::archive_tar "${OS_BINARY_RELEASE_CLIENT_LINUX[@]}"
-        elif [[ $platform == "linux-64bit" ]]; then
-          OS_RELEASE_ARCHIVE="openshift-origin-client-tools" os::build::archive_tar "${OS_BINARY_RELEASE_CLIENT_LINUX[@]}"
-          OS_RELEASE_ARCHIVE="openshift-origin-server" os::build::archive_tar "${OS_BINARY_RELEASE_SERVER_LINUX[@]}"
-        elif [[ $platform == "linux-powerpc64" ]]; then
-          OS_RELEASE_ARCHIVE="openshift-origin-client-tools" os::build::archive_tar "${OS_BINARY_RELEASE_CLIENT_LINUX[@]}"
-          OS_RELEASE_ARCHIVE="openshift-origin-server" os::build::archive_tar "${OS_BINARY_RELEASE_SERVER_LINUX[@]}"
-        elif [[ $platform == "linux-arm64" ]]; then
-          OS_RELEASE_ARCHIVE="openshift-origin-client-tools" os::build::archive_tar "${OS_BINARY_RELEASE_CLIENT_LINUX[@]}"
-          OS_RELEASE_ARCHIVE="openshift-origin-server" os::build::archive_tar "${OS_BINARY_RELEASE_SERVER_LINUX[@]}"
-        elif [[ $platform == "linux-s390" ]]; then
-          OS_RELEASE_ARCHIVE="openshift-origin-client-tools" os::build::archive_tar "${OS_BINARY_RELEASE_CLIENT_LINUX[@]}"
-          OS_RELEASE_ARCHIVE="openshift-origin-server" os::build::archive_tar "${OS_BINARY_RELEASE_SERVER_LINUX[@]}"
-        else
-          echo "++ ERROR: No release type defined for $platform"
-        fi
-      else
-        if [[ $platform == "linux-64bit" || $platform == "linux-powerpc64" || $platform == "linux-arm64" || $platform == "linux-s390" ]]; then
-          os::build::archive_tar "./*"
-        else
-          echo "++ ERROR: No release type defined for $platform"
-        fi
-      fi
       rm -rf "${release_binpath}"
     done
   )
@@ -574,8 +539,6 @@ function os::build::get_version_vars() {
     os::log::warning "No version file at ${OS_VERSION_FILE}, falling back to git versions"
   fi
   os::build::os_version_vars
-  os::build::kube_version_vars
-  #os::build::etcd_version_vars
 }
 readonly -f os::build::get_version_vars
 
@@ -622,39 +585,6 @@ function os::build::os_version_vars() {
 }
 readonly -f os::build::os_version_vars
 
-#function os::build::etcd_version_vars() {
-#  ETCD_GIT_VERSION=$(go run "${OS_ROOT}/tools/godepversion/godepversion.go" "${OS_ROOT}/Godeps/Godeps.json" "github.com/coreos/etcd/etcdserver" "comment")
-#  ETCD_GIT_COMMIT=$(go run "${OS_ROOT}/tools/godepversion/godepversion.go" "${OS_ROOT}/Godeps/Godeps.json" "github.com/coreos/etcd/etcdserver")
-#}
-#readonly -f os::build::etcd_version_vars
-
-# os::build::kube_version_vars returns the version of Kubernetes we have
-# vendored.
-function os::build::kube_version_vars() {
-  KUBE_GIT_VERSION="31f5598"
-  KUBE_GIT_COMMIT="31f5598"
-
-  # This translates the "git describe" to an actual semver.org
-  # compatible semantic version that looks something like this:
-  #   v1.1.0-alpha.0.6+84c76d1142ea4d
-  #
-  # TODO: We continue calling this "git version" because so many
-  # downstream consumers are expecting it there.
-  KUBE_GIT_VERSION=$(echo "${KUBE_GIT_VERSION}" | sed "s/-\([0-9]\{1,\}\)-g\([0-9a-f]\{7,40\}\)$/\+\2/")
-
-  # Try to match the "git describe" output to a regex to try to extract
-  # the "major" and "minor" versions and whether this is the exact tagged
-  # version or whether the tree is between two tagged versions.
-  if [[ "${KUBE_GIT_VERSION}" =~ ^v([0-9]+)\.([0-9]+)(\.[0-9]+)*([-].*)?$ ]]; then
-    KUBE_GIT_MAJOR=${BASH_REMATCH[1]}
-    KUBE_GIT_MINOR=${BASH_REMATCH[2]}
-    if [[ -n "${BASH_REMATCH[4]}" ]]; then
-      KUBE_GIT_MINOR+="+"
-    fi
-  fi
-}
-readonly -f os::build::kube_version_vars
-
 # Saves the environment flags to $1
 function os::build::save_version_vars() {
   local version_file=${1-}
@@ -671,8 +601,8 @@ OS_GIT_MAJOR='${OS_GIT_MAJOR-}'
 OS_GIT_MINOR='${OS_GIT_MINOR-}'
 KUBE_GIT_COMMIT='${KUBE_GIT_COMMIT-}'
 KUBE_GIT_VERSION='${KUBE_GIT_VERSION-}'
-#ETCD_GIT_VERSION='${ETCD_GIT_VERSION-}'
-#ETCD_GIT_COMMIT='${ETCD_GIT_COMMIT-}'
+ETCD_GIT_VERSION='${ETCD_GIT_VERSION-}'
+ETCD_GIT_COMMIT='${ETCD_GIT_COMMIT-}'
 EOF
 }
 readonly -f os::build::save_version_vars
@@ -714,26 +644,12 @@ function os::build::ldflags() {
 
   declare -a ldflags=()
 
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/pkg/bootstrap/docker.defaultImageStreams" "${OS_BUILD_LDFLAGS_DEFAULT_IMAGE_STREAMS}"))
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/pkg/cmd/util/variable.DefaultImagePrefix" "${OS_BUILD_LDFLAGS_IMAGE_PREFIX}"))
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/pkg/version.majorFromGit" "${OS_GIT_MAJOR}"))
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/pkg/version.minorFromGit" "${OS_GIT_MINOR}"))
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/pkg/version.versionFromGit" "${OS_GIT_VERSION}"))
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/pkg/version.commitFromGit" "${OS_GIT_COMMIT}"))
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/pkg/version.buildDate" "${buildDate}"))
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/vendor/k8s.io/kubernetes/pkg/version.gitCommit" "${KUBE_GIT_COMMIT}"))
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/vendor/k8s.io/kubernetes/pkg/version.gitVersion" "${KUBE_GIT_VERSION}"))
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/vendor/k8s.io/kubernetes/pkg/version.buildDate" "${buildDate}"))
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/vendor/k8s.io/kubernetes/pkg/version.gitTreeState" "clean"))
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/vendor/k8s.io/client-go/pkg/version.gitCommit" "${KUBE_GIT_COMMIT}"))
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/vendor/k8s.io/client-go/pkg/version.gitVersion" "${KUBE_GIT_VERSION}"))
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/vendor/k8s.io/client-go/pkg/version.buildDate" "${buildDate}"))
-  ldflags+=($(os::build::ldflag "${OS_GO_PACKAGE}/vendor/k8s.io/client-go/pkg/version.gitTreeState" "clean"))
-
   # The -ldflags parameter takes a single string, so join the output.
   echo "${ldflags[*]-}"
 }
 readonly -f os::build::ldflags
+
+
 
 # os::build::image builds an image from a directory, to a tag, with an optional dockerfile to
 # use as the third argument. The environment variable OS_BUILD_IMAGE_ARGS adds additional
