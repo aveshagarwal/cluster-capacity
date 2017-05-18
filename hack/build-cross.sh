@@ -80,7 +80,7 @@ os::build::build_binaries "${OS_CROSS_COMPILE_TARGETS[@]}"
 
 # Build the test binaries for the host platform
 OS_BUILD_PLATFORMS=("${test_platforms[@]+"${test_platforms[@]}"}")
-os::build::build_binaries "${OS_TEST_TARGETS[@]}"
+os::build::build_binaries
 
 # Make the primary client/server release.
 OS_BUILD_PLATFORMS=("${platforms[@]+"${platforms[@]}"}")
@@ -92,7 +92,6 @@ OS_BUILD_PLATFORMS=("${image_platforms[@]+"${image_platforms[@]}"}")
 OS_RELEASE_ARCHIVE="openshift-origin-image" \
   os::build::place_bins "${OS_IMAGE_COMPILE_BINARIES[@]}"
 
-os::build::release_sha
 
 if [[ "${OS_GIT_TREE_STATE:-dirty}" == "clean"  ]]; then
 	# only when we are building from a clean state can we claim to
