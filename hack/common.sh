@@ -575,7 +575,7 @@ function os::build::get_version_vars() {
   fi
   os::build::os_version_vars
   os::build::kube_version_vars
-  os::build::etcd_version_vars
+  #os::build::etcd_version_vars
 }
 readonly -f os::build::get_version_vars
 
@@ -622,17 +622,17 @@ function os::build::os_version_vars() {
 }
 readonly -f os::build::os_version_vars
 
-function os::build::etcd_version_vars() {
-  ETCD_GIT_VERSION=$(go run "${OS_ROOT}/tools/godepversion/godepversion.go" "${OS_ROOT}/Godeps/Godeps.json" "github.com/coreos/etcd/etcdserver" "comment")
-  ETCD_GIT_COMMIT=$(go run "${OS_ROOT}/tools/godepversion/godepversion.go" "${OS_ROOT}/Godeps/Godeps.json" "github.com/coreos/etcd/etcdserver")
-}
-readonly -f os::build::etcd_version_vars
+#function os::build::etcd_version_vars() {
+#  ETCD_GIT_VERSION=$(go run "${OS_ROOT}/tools/godepversion/godepversion.go" "${OS_ROOT}/Godeps/Godeps.json" "github.com/coreos/etcd/etcdserver" "comment")
+#  ETCD_GIT_COMMIT=$(go run "${OS_ROOT}/tools/godepversion/godepversion.go" "${OS_ROOT}/Godeps/Godeps.json" "github.com/coreos/etcd/etcdserver")
+#}
+#readonly -f os::build::etcd_version_vars
 
 # os::build::kube_version_vars returns the version of Kubernetes we have
 # vendored.
 function os::build::kube_version_vars() {
-  KUBE_GIT_VERSION=$(go run "${OS_ROOT}/tools/godepversion/godepversion.go" "${OS_ROOT}/Godeps/Godeps.json" "k8s.io/kubernetes/pkg/api" "comment")
-  KUBE_GIT_COMMIT=$(go run "${OS_ROOT}/tools/godepversion/godepversion.go" "${OS_ROOT}/Godeps/Godeps.json" "k8s.io/kubernetes/pkg/api")
+  KUBE_GIT_VERSION="31f5598"
+  KUBE_GIT_COMMIT="31f5598"
 
   # This translates the "git describe" to an actual semver.org
   # compatible semantic version that looks something like this:
@@ -671,8 +671,8 @@ OS_GIT_MAJOR='${OS_GIT_MAJOR-}'
 OS_GIT_MINOR='${OS_GIT_MINOR-}'
 KUBE_GIT_COMMIT='${KUBE_GIT_COMMIT-}'
 KUBE_GIT_VERSION='${KUBE_GIT_VERSION-}'
-ETCD_GIT_VERSION='${ETCD_GIT_VERSION-}'
-ETCD_GIT_COMMIT='${ETCD_GIT_COMMIT-}'
+#ETCD_GIT_VERSION='${ETCD_GIT_VERSION-}'
+#ETCD_GIT_COMMIT='${ETCD_GIT_COMMIT-}'
 EOF
 }
 readonly -f os::build::save_version_vars
