@@ -472,9 +472,9 @@ readonly -f os::build::release_sha
 # binary in _output/local/bin/${platform}
 function os::build::make_openshift_binary_symlinks() {
   platform=$(os::build::host_platform)
-  if [[ -f "${OS_OUTPUT_BINPATH}/${platform}/openshift" ]]; then
+  if [[ -f "${OS_OUTPUT_BINPATH}/${platform}/hypercc" ]]; then
     for linkname in "${OPENSHIFT_BINARY_SYMLINKS[@]}"; do
-      ln -sf openshift "${OS_OUTPUT_BINPATH}/${platform}/${linkname}"
+      ln -sf hypercc "${OS_OUTPUT_BINPATH}/${platform}/${linkname}"
     done
   fi
 }

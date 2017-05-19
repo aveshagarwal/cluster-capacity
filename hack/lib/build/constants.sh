@@ -34,12 +34,6 @@ readonly OPENSHIFT_BINARY_SYMLINKS=(
   cluster-capacity
   genpod
 )
-readonly OPENSHIFT_BINARY_COPY=(
-openshift-hypercc
-)
-readonly OC_BINARY_COPY=(
-oc-hypercc
-)
 readonly OS_BINARY_RELEASE_CLIENT_WINDOWS=(
   hypercc.exe
 )
