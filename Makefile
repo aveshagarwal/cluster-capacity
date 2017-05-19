@@ -28,5 +28,9 @@ integration-tests:
 image:
 	docker build -t docker.io/gofed/cluster-capacity .
 
+build-cross:
+	hack/build-cross.sh
+.PHONY: build-cross
+
 clean:
 	rm -f cluster-capacity genpod hypercc
