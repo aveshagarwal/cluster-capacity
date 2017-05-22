@@ -72,7 +72,6 @@ fi
 # linux-only, and are compiled with flags to make them static for use in Docker
 # images "FROM scratch".
 OS_BUILD_PLATFORMS=("${image_platforms[@]+"${image_platforms[@]}"}")
-os::build::build_static_binaries "${OS_IMAGE_COMPILE_TARGETS_LINUX[@]-}" "${OS_SCRATCH_IMAGE_COMPILE_TARGETS_LINUX[@]-}"
 
 # Build the primary client/server for all platforms
 OS_BUILD_PLATFORMS=("${platforms[@]+"${platforms[@]}"}")
