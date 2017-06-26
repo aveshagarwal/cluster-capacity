@@ -64,7 +64,7 @@ type ClusterCapacity struct {
 	informerFactory einformers.SharedInformerFactory
 
 	// fake rest clients
-	coreRestClient *external.RESTClient
+	//coreRestClient *external.RESTClient
 
 	// schedulers
 	schedulers       map[string]*scheduler.Scheduler
@@ -203,7 +203,7 @@ func (c *ClusterCapacity) Close() {
 		close(name.StopEverything)
 	}
 
-	c.coreRestClient.Close()
+	//c.coreRestClient.Close()
 	close(c.informerStopCh)
 	c.closed = true
 }
@@ -366,7 +366,7 @@ func New(s *soptions.SchedulerServer, simulatedPod *v1.Pod, maxPods int) (*Clust
 		simulatedPod:       simulatedPod,
 		simulated:          0,
 		maxSimulated:       maxPods,
-		coreRestClient:     restClient,
+		//coreRestClient:     restClient,
 	}
 
 	for _, resource := range resourceStore.Resources() {
