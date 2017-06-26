@@ -19,10 +19,10 @@ package store
 import (
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
+	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	//"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/tools/cache"
-	clientset "k8s.io/kubernetes/pkg/client/clientset_generated/clientset"
+	//clientset "k8s.io/kubernetes/pkg/client/clientset_generated/clientset"
 
 	ccapi "github.com/kubernetes-incubator/cluster-capacity/pkg/api"
 )
@@ -196,13 +196,4 @@ func NewResourceStore() *resourceStore {
 	resourceStore.resourceToCache = resourceToCache
 
 	return resourceStore
-}
-
-func NewResourceReflectors(client clientset.Interface, stopCh <-chan struct{}) *resourceStore {
-	rs := NewResourceStore()
-	for _, resource := range rs.Resources() {
-		listWatcher := cache.NewListWatchFromClient(client.Core().RESTClient(), resource.String(), metav1.NamespaceAll, fields.ParseSelectorOrDie(""))
-		cache.NewReflector(listWatcher, resource.ObjectType(), rs.resourceToCache[resource], 0).RunUntil(stopCh)
-	}
-	return rs
 }

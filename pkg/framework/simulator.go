@@ -48,15 +48,15 @@ import (
 	"github.com/kubernetes-incubator/cluster-capacity/pkg/framework/record"
 	"github.com/kubernetes-incubator/cluster-capacity/pkg/framework/restclient/external"
 	"github.com/kubernetes-incubator/cluster-capacity/pkg/framework/store"
-	"github.com/kubernetes-incubator/cluster-capacity/pkg/framework/strategy"
+	//"github.com/kubernetes-incubator/cluster-capacity/pkg/framework/strategy"
 )
 
 type ClusterCapacity struct {
 	// caches modified by emulation strategy
 	resourceStore store.ResourceStore
 
-	// emulation strategy
-	strategy strategy.Strategy
+	//// emulation strategy
+	//strategy strategy.Strategy
 
 	// fake kube client
 	externalkubeclient *externalclientset.Clientset
@@ -167,9 +167,9 @@ func (c *ClusterCapacity) Bind(binding *v1.Binding, schedulerName string) error 
 	updatedPod.Status.Phase = v1.PodRunning
 
 	// TODO(jchaloup): rename Add to Update as this actually updates the scheduled pod
-	if err := c.strategy.Add(&updatedPod); err != nil {
-		return fmt.Errorf("Unable to recompute new cluster state: %v", err)
-	}
+	//if err := c.strategy.Add(&updatedPod); err != nil {
+	//	return fmt.Errorf("Unable to recompute new cluster state: %v", err)
+	//}
 
 	c.status.Pods = append(c.status.Pods, &updatedPod)
 	go func() {
@@ -360,8 +360,8 @@ func New(s *soptions.SchedulerServer, simulatedPod *v1.Pod, maxPods int) (*Clust
 	restClient := external.NewRESTClient(resourceStore, "core")
 
 	cc := &ClusterCapacity{
-		resourceStore:      resourceStore,
-		strategy:           strategy.NewPredictiveStrategy(resourceStore),
+		resourceStore: resourceStore,
+		//strategy:           strategy.NewPredictiveStrategy(resourceStore),
 		externalkubeclient: externalclientset.New(restClient),
 		simulatedPod:       simulatedPod,
 		simulated:          0,
