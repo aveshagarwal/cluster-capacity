@@ -144,9 +144,9 @@ func runSimulator(s *options.ClusterCapacityConfig, syncWithClient bool) (*frame
 
 	if syncWithClient {
 		err = cc.SyncWithClient(s.KubeClient)
-	} else {
+	} /*else {
 		err = cc.SyncWithStore(s.ResourceStore)
-	}
+	}*/
 	if err != nil {
 		return nil, err
 	}
