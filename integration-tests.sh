@@ -87,7 +87,7 @@ if [ "$?" -ne 0 ]; then
   exit 1
 fi
 
-while [ $($KUBECTL get pods | grep nginx | grep "Running" | wc -l) -ne 3 ]; do
+while [ $($KUBECTL get pods | grep "test-pod" | grep "Running" | wc -l) -ne 3 ]; do
   echo "waiting for pods to come up"
   sleep 1s
 done
